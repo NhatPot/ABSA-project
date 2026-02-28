@@ -335,6 +335,8 @@ def main(config_path: Optional[str] = None, max_ratio: float = 7.0, moderate: bo
         output_files = [
             'BILSTM-MTL/data/train_multilabel_balanced.csv',
             'BILSTM-STL/data/train_multilabel_balanced.csv',
+            'PhoBERT-STL/data/train_multilabel_balanced.csv',
+            'phoBERT-MTL/data/train_multilabel_balanced.csv',
             'VisoBERT-MTL/data/train_multilabel_balanced.csv',
             'VisoBERT-STL/data/train_multilabel_balanced.csv'
         ]
@@ -343,6 +345,8 @@ def main(config_path: Optional[str] = None, max_ratio: float = 7.0, moderate: bo
         output_files = [
             'BILSTM-MTL/data/train_multilabel_balanced.csv',
             'BILSTM-STL/data/train_multilabel_balanced.csv',
+            'PhoBERT-STL/data/train_multilabel_balanced.csv',
+            'phoBERT-MTL/data/train_multilabel_balanced.csv',
             'VisoBERT-MTL/data/train_multilabel_balanced.csv',
             'VisoBERT-STL/data/train_multilabel_balanced.csv'
         ]
@@ -350,7 +354,7 @@ def main(config_path: Optional[str] = None, max_ratio: float = 7.0, moderate: bo
         
         print(f"\n[No config provided, using defaults]")
         print(f"[Default seed: {seed}]")
-        print(f"[Will save to all 4 model directories]")
+        print(f"[Will save to all 6 model directories]")
         set_all_seeds(seed)
     
     aspect_cols = [
@@ -481,9 +485,11 @@ def main(config_path: Optional[str] = None, max_ratio: float = 7.0, moderate: bo
     print(f"   All random states set for reproducibility")
     
     print(f"\nNext step:")
-    print(f"   Files saved to all 4 model directories:")
+    print(f"   Files saved to all 6 model directories:")
     print(f"   - BILSTM-MTL/data/train_multilabel_balanced.csv")
     print(f"   - BILSTM-STL/data/train_multilabel_balanced.csv")
+    print(f"   - PhoBERT-STL/data/train_multilabel_balanced.csv")
+    print(f"   - phoBERT-MTL/data/train_multilabel_balanced.csv")
     print(f"   - VisoBERT-MTL/data/train_multilabel_balanced.csv")
     print(f"   - VisoBERT-STL/data/train_multilabel_balanced.csv")
     print(f"   You can now train models in each directory.")

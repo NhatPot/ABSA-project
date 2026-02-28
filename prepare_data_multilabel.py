@@ -164,6 +164,8 @@ def save_splits(train_df, val_df, test_df, output_dirs=None, seed=None):
         output_dirs = [
             'BILSTM-MTL/data',
             'BILSTM-STL/data',
+            'PhoBERT-STL/data',
+            'phoBERT-MTL/data',
             'VisoBERT-MTL/data',
             'VisoBERT-STL/data'
         ]
@@ -255,7 +257,7 @@ def main(config_path: Optional[str] = None, use_random_seed: bool = True, cli_se
         print(f"[Data split seed: {seed}]")
         set_all_seeds(seed)
         
-        print(f"[Will save to all 4 model directories]")
+        print(f"[Will save to all 6 model directories]")
     else:
         input_file = 'dataset.csv'  # From E:\BERT\
         output_dirs = None  # Will use default 4 directories
