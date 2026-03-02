@@ -28,9 +28,6 @@ pyyaml>=6.0
 # Progress Bar
 tqdm>=4.65.0
 
-# Experiment Tracking
-wandb
-
 # Utilities
 sentencepiece>=0.1.99
 protobuf>=3.20.0

@@ -419,12 +419,23 @@ def main(args: argparse.Namespace):
     log_file = setup_logging(output_dir)
     logging.info("Starting phoBERT-MTL training")
     
-    # WandB init
-    wandb.init(
-        project="absa-vietnamese",
-        name="PhoBERT-MTL",
-        config=config
-    )
+    # Initialize wandb
+    try:
+        wandb_key = os.environ.get("WANDB_API_KEY")
+        if wandb_key:
+            wandb.login(key=wandb_key)
+        else:
+            wandb.login()
+        wandb.init(
+            project="ABSA-Vietnamese",
+            name="PhoBERT-MTL",
+            config=config,
+            tags=["mtl", "phobert"],
+        )
+    except Exception as e:
+        logging.warning(f"Wandb initialization failed: {e}. Training will continue without wandb.")
+        os.environ["WANDB_MODE"] = "disabled"
+        wandb.init(mode="disabled")
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
@@ -592,17 +603,6 @@ def main(args: argparse.Namespace):
             "phoBERT-MTL Val - AD F1: %.2f%%, SC F1: %.2f%%" % (ad_f1*100, sc_f1*100)
         )
         
-        # Log to WandB
-        wandb.log({
-            "epoch": epoch,
-            "train_loss": train_loss,
-            "train_ad_loss": train_ad_loss,
-            "train_sc_loss": train_sc_loss,
-            "val_ad_f1": ad_f1,
-            "val_sc_f1": sc_f1,
-            "val_combined_f1": current_selection_metric
-        })
-        
         # Save history
         history.append({
             'epoch': epoch,
@@ -614,6 +614,20 @@ def main(args: argparse.Namespace):
             'val_sc_accuracy': sc_acc,
             'val_sc_f1': sc_f1,
             'val_selection_metric': current_selection_metric
+        })
+        
+        # Log to wandb
+        wandb.log({
+            'epoch': epoch,
+            'train/loss': train_loss,
+            'train/ad_loss': train_ad_loss,
+            'train/sc_loss': train_sc_loss,
+            'val/ad_accuracy': ad_acc,
+            'val/ad_f1': ad_f1,
+            'val/sc_accuracy': sc_acc,
+            'val/sc_f1': sc_f1,
+            'val/combined_f1': current_selection_metric,
+            'learning_rate': scheduler.get_last_lr()[0],
         })
         
         # Save best model
@@ -701,6 +715,7 @@ def main(args: argparse.Namespace):
     print("="*80)
     print(f"\nAll results saved to: {output_dir}")
     
+    # Finish wandb
     wandb.finish()
 
 

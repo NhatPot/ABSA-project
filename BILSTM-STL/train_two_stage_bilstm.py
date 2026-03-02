@@ -287,20 +287,20 @@ def train_aspect_detection(config: dict, args: argparse.Namespace) -> str:
         
         logging.info(f"AD Val - Acc: {val_metrics['overall_accuracy']*100:.2f}%, F1: {val_metrics['overall_f1']*100:.2f}%")
         
-        # Log to WandB
-        wandb.log({
-            "ad/epoch": epoch,
-            "ad/train_loss": train_loss,
-            "ad/val_f1": val_metrics['overall_f1'],
-            "ad/val_accuracy": val_metrics['overall_accuracy']
-        })
-        
         # Save history
         history.append({
             'epoch': epoch,
             'train_loss': train_loss,
             'val_accuracy': val_metrics['overall_accuracy'],
             'val_f1': val_metrics['overall_f1']
+        })
+        
+        # Log AD metrics to wandb
+        wandb.log({
+            'ad/epoch': epoch,
+            'ad/train_loss': train_loss,
+            'ad/val_accuracy': val_metrics['overall_accuracy'],
+            'ad/val_f1': val_metrics['overall_f1'],
         })
         
         # Save best model
@@ -648,20 +648,20 @@ def train_sentiment_classification(config: dict, args: argparse.Namespace) -> st
         
         logging.info(f"SC Val - Acc: {val_metrics['overall_accuracy']*100:.2f}%, F1: {val_metrics['overall_f1']*100:.2f}%")
         
-        # Log to WandB
-        wandb.log({
-            "sc/epoch": epoch,
-            "sc/train_loss": train_loss,
-            "sc/val_f1": val_metrics['overall_f1'],
-            "sc/val_accuracy": val_metrics['overall_accuracy']
-        })
-        
         # Save history
         history.append({
             'epoch': epoch,
             'train_loss': train_loss,
             'val_accuracy': val_metrics['overall_accuracy'],
             'val_f1': val_metrics['overall_f1']
+        })
+        
+        # Log SC metrics to wandb
+        wandb.log({
+            'sc/epoch': epoch,
+            'sc/train_loss': train_loss,
+            'sc/val_accuracy': val_metrics['overall_accuracy'],
+            'sc/val_f1': val_metrics['overall_f1'],
         })
         
         # Save best model
@@ -843,12 +843,23 @@ def main(args: argparse.Namespace):
     print(f"\nLoading config from: {args.config}")
     config = load_config(args.config)
     
-    # WandB init
-    wandb.init(
-        project="absa-vietnamese",
-        name="BiLSTM-STL",
-        config=config
-    )
+    # Initialize wandb
+    try:
+        wandb_key = os.environ.get("WANDB_API_KEY")
+        if wandb_key:
+            wandb.login(key=wandb_key)
+        else:
+            wandb.login()
+        wandb.init(
+            project="ABSA-Vietnamese",
+            name="BiLSTM-STL",
+            config=config,
+            tags=["stl", "bilstm"],
+        )
+    except Exception as e:
+        logging.warning(f"Wandb initialization failed: {e}. Training will continue without wandb.")
+        os.environ["WANDB_MODE"] = "disabled"
+        wandb.init(mode="disabled")
     
     # Stage 1: Aspect Detection
     ad_output_dir = train_aspect_detection(config, args)
@@ -869,6 +880,7 @@ def main(args: argparse.Namespace):
     print(f"  - SC: {sc_output_dir}")
     print(f"  - Final: {final_results_dir}")
     
+    # Finish wandb
     wandb.finish()
 
 
