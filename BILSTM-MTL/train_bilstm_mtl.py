@@ -24,6 +24,7 @@ from datetime import datetime
 from typing import Dict, Any
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
+import wandb
 
 from model_bilstm_mtl import BiLSTM_MTL
 from dataset_bilstm_mtl import MTLDataset
@@ -377,6 +378,13 @@ def main(args: argparse.Namespace):
     log_file = setup_logging(output_dir)
     logging.info("Starting MTL training (BiLSTM)")
     
+    # WandB init
+    wandb.init(
+        project="absa-vietnamese",
+        name="BiLSTM-MTL",
+        config=config
+    )
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
     
@@ -503,6 +511,17 @@ def main(args: argparse.Namespace):
         
         logging.info(f"MTL Val - AD F1: {val_metrics['ad']['overall_f1']*100:.2f}%, SC F1: {val_metrics['sc']['overall_f1']*100:.2f}%, Combined: {combined_metric*100:.2f}%")
         
+        # Log to WandB
+        wandb.log({
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "train_ad_loss": train_ad_loss,
+            "train_sc_loss": train_sc_loss,
+            "val_ad_f1": val_metrics['ad']['overall_f1'],
+            "val_sc_f1": val_metrics['sc']['overall_f1'],
+            "val_combined_f1": combined_metric
+        })
+        
         # Save history
         history.append({
             'epoch': epoch,
@@ -580,6 +599,8 @@ def main(args: argparse.Namespace):
     print("BILSTM MTL TRAINING COMPLETE!")
     print("="*80)
     print(f"\nAll results saved to: {output_dir}")
+    
+    wandb.finish()
 
 
 if __name__ == '__main__':

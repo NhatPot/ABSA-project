@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
+import wandb
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 import pandas as pd
 import numpy as np
@@ -326,6 +327,14 @@ def train_aspect_detection(config: dict, args: argparse.Namespace) -> str:
         
         logging.info(f"AD Val - Acc: {val_metrics['overall_accuracy']*100:.2f}%, "
                     f"F1: {val_metrics['overall_f1']*100:.2f}%")
+        
+        # Log to WandB
+        wandb.log({
+            "ad/epoch": epoch,
+            "ad/train_loss": train_loss,
+            "ad/val_f1": val_metrics['overall_f1'],
+            "ad/val_accuracy": val_metrics['overall_accuracy']
+        })
         
         # Save history
         history.append({
@@ -737,6 +746,14 @@ def train_sentiment_classification(config: dict, args: argparse.Namespace) -> st
         logging.info(f"SC Val - Acc: {val_metrics['overall_accuracy']*100:.2f}%, "
                     f"F1: {val_metrics['overall_f1']*100:.2f}%")
         
+        # Log to WandB
+        wandb.log({
+            "sc/epoch": epoch,
+            "sc/train_loss": train_loss,
+            "sc/val_f1": val_metrics['overall_f1'],
+            "sc/val_accuracy": val_metrics['overall_accuracy']
+        })
+        
         # Save history
         history.append({
             'epoch': epoch,
@@ -1095,6 +1112,13 @@ def main(args: argparse.Namespace):
     print(f"\nLoading config from: {args.config}")
     config = load_config(args.config)
     
+    # WandB init
+    wandb.init(
+        project="absa-vietnamese",
+        name="PhoBERT-STL",
+        config=config
+    )
+    
     # Stage 1: Aspect Detection
     ad_output_dir = train_aspect_detection(config, args)
     
@@ -1117,6 +1141,8 @@ def main(args: argparse.Namespace):
     print(f"  - AD: {ad_output_dir}")
     print(f"  - SC: {sc_output_dir}")
     print(f"  - Final: {final_results_dir}")
+    
+    wandb.finish()
 
 
 if __name__ == '__main__':

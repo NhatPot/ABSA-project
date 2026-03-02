@@ -25,6 +25,7 @@ from datetime import datetime
 from typing import Dict, Any
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
+import wandb
 
 # Import from VisoBERT-STL for focal losses
 import sys
@@ -420,6 +421,13 @@ def main(args: argparse.Namespace):
     log_file = setup_logging(output_dir)
     logging.info("Starting ViSoBERT-MTL training")
     
+    # WandB init
+    wandb.init(
+        project="absa-vietnamese",
+        name="ViSoBERT-MTL",
+        config=config
+    )
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
     
@@ -586,6 +594,17 @@ def main(args: argparse.Namespace):
             "ViSoBERT-MTL Val - AD F1: %.2f%%, SC F1: %.2f%%" % (ad_f1*100, sc_f1*100)
         )
         
+        # Log to WandB
+        wandb.log({
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "train_ad_loss": train_ad_loss,
+            "train_sc_loss": train_sc_loss,
+            "val_ad_f1": ad_f1,
+            "val_sc_f1": sc_f1,
+            "val_combined_f1": current_selection_metric
+        })
+        
         # Save history
         history.append({
             'epoch': epoch,
@@ -683,6 +702,8 @@ def main(args: argparse.Namespace):
     print("VISOBERT-MTL TRAINING COMPLETE!")
     print("="*80)
     print(f"\nAll results saved to: {output_dir}")
+    
+    wandb.finish()
 
 
 if __name__ == '__main__':

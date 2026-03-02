@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
+import wandb
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 import pandas as pd
 import numpy as np
@@ -410,6 +411,14 @@ def train_aspect_detection(config: dict, args: argparse.Namespace) -> str:
         logging.info(f"AD Val - Loss: {val_loss:.4f}, " if val_loss is not None else "AD Val - Loss: N/A, " +
                     f"Acc: {val_metrics['overall_accuracy']*100:.2f}%, "
                     f"F1: {val_metrics['overall_f1']*100:.2f}%")
+        
+        # Log to WandB
+        wandb.log({
+            "ad/epoch": epoch,
+            "ad/train_loss": train_loss,
+            "ad/val_f1": val_metrics['overall_f1'],
+            "ad/val_accuracy": val_metrics['overall_accuracy']
+        })
         
         # Save history
         history_entry = {
@@ -956,6 +965,14 @@ def train_sentiment_classification(config: dict, args: argparse.Namespace) -> st
                     f"Acc: {val_metrics['overall_accuracy']*100:.2f}%, "
                     f"F1: {val_metrics['overall_f1']*100:.2f}%")
         
+        # Log to WandB
+        wandb.log({
+            "sc/epoch": epoch,
+            "sc/train_loss": train_loss,
+            "sc/val_f1": val_metrics['overall_f1'],
+            "sc/val_accuracy": val_metrics['overall_accuracy']
+        })
+        
         # Save history
         history.append({
             'epoch': epoch,
@@ -1410,6 +1427,13 @@ def main(args: argparse.Namespace):
     print(f"\nLoading config from: {args.config}")
     config = load_config(args.config)
     
+    # WandB init
+    wandb.init(
+        project="absa-vietnamese",
+        name="ViSoBERT-STL",
+        config=config
+    )
+    
     # Stage 1: Aspect Detection
     ad_output_dir: Optional[str] = None
     if config['two_stage'].get('train_ad_first', True):
@@ -1442,6 +1466,8 @@ def main(args: argparse.Namespace):
     print(f"  - AD: {ad_output_dir if ad_output_dir is not None else 'SKIPPED'}")
     print(f"  - SC: {sc_output_dir}")
     print(f"  - Final: {final_results_dir}")
+    
+    wandb.finish()
 
 
 if __name__ == '__main__':
